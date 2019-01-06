@@ -102,8 +102,9 @@ $("#message-form").on("submit", function(e) {
 	socket.emit('createMessage',{
 		text:messageTextBox.val()
 	},function () {
-		messageTextBox.val('');
+		$('[name=message]').val('');
 	});
+	$('[name=message]').val('');
 });
 
 // $('document').ready(function() {
