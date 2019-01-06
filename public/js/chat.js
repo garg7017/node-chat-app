@@ -1,19 +1,53 @@
 var socket = io();
 socket.on('connect',function () {
-	console.log("connected to server");
+	var params = $.deparam(window.location.search);
 
-	// socket.emit('createMessage',{
-	// 	from: 'Lokesh',
-	// 	text: 'Hi',
-	// });
+	socket.emit('join',params, function(err) {
+		if(err){
+			alert(err);
+			window.location.href = '/';
+		} else {
+			console.log('No error');
+		}
+	});
 
 });
+
+
+function scrollToBottom () {
+	var messages = $("#messages");
+	var newMessage = messages.children("li:last-child");
+
+	var clientHeight = messages.prop('clientHeight');
+	var scrollTop = messages.prop('scrollTop');
+	var scrollHeight = messages.prop('scrollHeight');
+	var newMessageHeight = newMessage.innerHeight();
+	var lastMessageHeight = newMessage.prev().innerHeight();
+
+	if(clientHeight + scrollTop + newMessageHeight + lastMessageHeight >= scrollHeight){
+		// console.log("Should scroll");
+		messages.scrollTop(scrollHeight);
+	}
+}
 
 
 
 socket.on('disconnect', function () {
 	console.log("Disconnected to server");
 });
+
+socket.on('updateUserList', function (users) {
+	// console.log("user list", users);
+	var ol = $('<ol></ol>');
+
+	users.forEach(function (user) {
+		ol.append($('<li></li>').text(user));
+	});
+
+	$("#users").html(ol);
+
+});
+
 
 socket.on('newMessage', function (message) {
 	var formattedTime = moment(message.createdAt).format('h:mm a');
@@ -24,6 +58,7 @@ socket.on('newMessage', function (message) {
 		createdAt:formattedTime
 	});
 	$("#messages").append(html);
+	scrollToBottom();
 
 	// var li = $('<li></li>');
 	// li.text(`${message.from} ${formattedTime}: ${message.text}`);
@@ -40,6 +75,7 @@ socket.on('newLocationMessage', function (message) {
 		createdAt:formattedTime
 	});
 	$("#messages").append(html);
+	scrollToBottom();
 
 	// var formattedTime = moment(message.createdAt).format('h:mm a');
 	// var li = $('<li></li>');
@@ -64,7 +100,6 @@ $("#message-form").on("submit", function(e) {
 
 	var messageTextBox = $('[name=message]');
 	socket.emit('createMessage',{
-		from:'User',
 		text:messageTextBox.val()
 	},function () {
 		messageTextBox.val('');
